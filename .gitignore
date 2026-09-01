@@ -1,0 +1,25 @@
+# Laravel
+/backend/vendor/
+/backend/.env
+/backend/.env.backup
+/backend/storage/*.key
+
+# Laravel runtime
+/backend/storage/framework/cache/*
+/backend/storage/framework/sessions/*
+/backend/storage/framework/testing/*
+/backend/storage/framework/views/*
+/backend/storage/logs/*
+
+# Next.js
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
