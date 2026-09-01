@@ -1,27 +1,40 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // ...existing code...
+  useEffect(() => {
+    if (user === null) {
+      const t = setTimeout(() => {
+        setEmail('');
+        setPassword('');
+        setError('');
+      }, 0);
+      return () => clearTimeout(t);
+    }
+  }, [user]);
+  // ...existing code...
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError("");
+    setError('');
     setLoading(true);
     try {
       await login(email, password);
-      router.push("/products");
+      router.push('/products');
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -31,16 +44,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-md rounded-2xl p-8 shadow ring-1 ring-black/10">
         <h1 className="text-2xl font-bold mb-1">Sign in</h1>
-        <p className="text-sm opacity-70 mb-6">
-          Choose a demo account or register a new one.
-        </p>
+        <p className="text-sm opacity-70 mb-6">Choose a demo account or register a new one.</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
               type="email"
               required
+              autoComplete="off"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
@@ -52,6 +64,7 @@ export default function LoginPage() {
             <input
               type="password"
               required
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
@@ -59,23 +72,19 @@ export default function LoginPage() {
             />
           </div>
 
-          {error && (
-            <p className="rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">
-              {error}
-            </p>
-          )}
+          {error && <p className="rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm">
-          No account?{" "}
+          No account?{' '}
           <Link href="/register" className="text-blue-600 hover:underline">
             Register
           </Link>
@@ -86,8 +95,6 @@ export default function LoginPage() {
             Browse as guest →
           </Link>
         </p>
-
-        
       </div>
     </div>
   );

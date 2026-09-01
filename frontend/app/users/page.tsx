@@ -86,8 +86,15 @@ export default function UsersPage() {
     }
   }
 
-  async function handleRoleChange(id: number, role: string) {
+  async function handleRoleChange(id: number, role: string, name?: string) {
     setError("");
+    if (
+      !window.confirm(
+        `Set role of "${name ?? "this user"}" to "${role.replace("_", " ")}"?`
+      )
+    ) {
+      return;
+    }
     try {
       await api.updateUser(id, { role });
       setMessage("Role updated.");
@@ -97,8 +104,15 @@ export default function UsersPage() {
     }
   }
 
-  async function handleDelete(id: number) {
+  async function handleDelete(id: number, name?: string) {
     setError("");
+    if (
+      !window.confirm(
+        `Are you sure you want to delete the user "${name ?? "this user"}"? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
     try {
       await api.deleteUser(id);
       setMessage("User deleted.");
@@ -220,7 +234,7 @@ export default function UsersPage() {
                   <td className="py-2 pr-4">
                     <select
                       value={u.role}
-                      onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                      onChange={(e) => handleRoleChange(u.id, e.target.value, u.name)}
                       style={{ backgroundColor: ROLE_COLORS[u.role] }}
                       className="rounded-lg border px-2 py-1 text-xs font-medium text-white"
                     >
@@ -233,7 +247,7 @@ export default function UsersPage() {
                   </td>
                   <td className="py-2 text-right">
                     <button
-                      onClick={() => handleDelete(u.id)}
+                      onClick={() => handleDelete(u.id, u.name)}
                       disabled={u.role === "super_admin"}
                       className="rounded-lg border border-red-300 px-3 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-40"
                     >

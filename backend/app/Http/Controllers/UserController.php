@@ -4,57 +4,102 @@ namespace App\Http\Controllers;
 
 use App\Enums\Role;
 use App\Models\User;
+use App\Http\Requests\User\StoreUserRequest;
+use App\Http\Requests\User\UpdateUserRequest;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Exception;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        return User::orderBy('id')->get(['id', 'name', 'email', 'role', 'created_at']);
+        try {
+            return User::orderBy('id')->get(['id', 'name', 'email', 'role', 'created_at']);
+
+        } catch (Exception $e) {
+            Log::error('Failed to fetch users: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Failed to fetch users.'
+            ], 500);
+        }
     }
 
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:' . implode(',', Role::values())],
-        ]);
+        try {
+            $data = $request->validated();
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => $data['password'],
-            'role' => $data['role'],
-        ]);
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']), // Fixed: Hash password
+                'role' => $data['role'],
+            ]);
 
-        return response()->json(['message' => 'User created.', 'user' => $user], 201);
+            return response()->json([
+                'message' => 'User created successfully.',
+                'user' => $user
+            ], 201);
+
+        } catch (Exception $e) {
+            Log::error('Failed to create user: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Failed to create user. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'password' => ['sometimes', 'confirmed', Rules\Password::defaults()],
-            'role' => ['sometimes', 'in:' . implode(',', Role::values())],
-        ]);
+        try {
+            $data = $request->validated();
 
-        $user->update($data);
+            // Hash password if it's being updated
+            if (isset($data['password'])) {
+                $data['password'] = Hash::make($data['password']);
+            }
 
-        return response()->json(['message' => 'User updated.', 'user' => $user]);
+            $user->update($data);
+
+            return response()->json([
+                'message' => 'User updated successfully.',
+                'user' => $user
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Failed to update user: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Failed to update user. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 
     public function destroy(User $user)
     {
-        if ($user->isSuperAdmin()) {
-            return response()->json(['message' => 'Super Admin cannot be deleted.'], 403);
+        try {
+            if ($user->isSuperAdmin()) {
+                return response()->json([
+                    'message' => 'Super Admin cannot be deleted.'
+                ], 403);
+            }
+
+            $user->delete();
+
+            return response()->json(['message' => 'User deleted successfully.']);
+
+        } catch (Exception $e) {
+            Log::error('Failed to delete user: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Failed to delete user. Please try again.'
+            ], 500);
         }
-
-        $user->delete();
-
-        return response()->json(['message' => 'User deleted.']);
     }
 }

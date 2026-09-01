@@ -15,7 +15,7 @@ interface AuthContextValue {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, passwordConfirmation: string) => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (...roles: string[]) => boolean;
   canManageProducts: boolean;
@@ -62,8 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(
-    async (name: string, email: string, password: string) => {
-      const res = await api.register(name, email, password);
+    async (name: string, email: string, password: string, passwordConfirmation: string) => {
+      const res = await api.register(name, email, password, passwordConfirmation);
       localStorage.setItem(TOKEN_KEY, res.token);
       setToken(res.token);
       setTokenProvider(() => res.token);
